@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#060908">
+<meta name="description" content="Clockwork Garden: a living substrate. Fungal colonies forage, grow hyphae, join trees and learn a shared language at the boundary. An in-browser sketch of the simulation's mechanics.">
+<title>Clockwork Garden · A living substrate</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%2714%27 fill=%27%23060908%27/%3E%3Ctext x=%2716%27 y=%2722%27 font-size=%2718%27 text-anchor=%27middle%27 fill=%27%235fae7a%27%3E%E2%9C%B3%3C/text%3E%3C/svg%3E">
+<style>
+:root{color-scheme:dark;--bg:#060908;--fg:#e9efe6;--dim:#93a391;--line:#ffffff22;--panel:#0b1410ee;--moss:#5fae7a;--amber:#e9b25c;--gold:#f3cf7a;--rust:#d97a5a;--mist:#78a9b8;--ink:#1a2a22}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--fg);font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+button,select{font:inherit;color:var(--fg);background:#101a15;border:1px solid var(--line);border-radius:6px;min-height:40px;padding:8px 13px;cursor:pointer;transition:background .18s,border-color .18s}button:hover,select:hover{background:#1b2a22;border-color:#8fc9a3}button[aria-pressed=true]{color:var(--amber);border-color:#e9b25c88;background:#3a2c1680}button:focus-visible,select:focus-visible,canvas:focus-visible,a:focus-visible{outline:2px solid var(--amber);outline-offset:3px}button.primary{background:var(--amber);color:#17120a;border-color:var(--amber);font-weight:700}button.quiet{background:transparent}a{color:inherit;text-underline-offset:4px}[hidden]{display:none!important}
+#app{position:relative;height:100%;isolation:isolate}#stage{position:absolute;inset:0}#c{display:block;width:100%;height:100%;cursor:crosshair;touch-action:manipulation}#stage:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(#060908e6 0%,#06090833 16%,transparent 32%,transparent 66%,#06090899 86%,#060908ee 100%)}
+.header{position:absolute;z-index:4;left:32px;right:32px;top:22px;display:flex;align-items:flex-start;justify-content:space-between;gap:20px;pointer-events:none}.header>*{pointer-events:auto}.brand h1{font-size:23px;letter-spacing:-1px;margin:0;line-height:1.15;font-weight:600}.brand h1 .mark{color:var(--moss);font-size:26px;margin-right:10px;vertical-align:-2px}.eyebrow{text-transform:uppercase;font-size:10px;letter-spacing:2px;color:var(--dim)}.brand .eyebrow{margin:8px 0 0 40px;font-size:9px;letter-spacing:1.6px}.header-right{display:flex;align-items:center;gap:10px}.session{display:flex;align-items:center;gap:8px;margin-right:8px;font-size:10px;color:var(--moss);letter-spacing:1px;text-transform:uppercase}.session:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--moss);box-shadow:0 0 10px #5fae7a88}
+.context{position:absolute;z-index:2;left:32px;top:112px;pointer-events:none;max-width:520px}.context h2{font:500 clamp(22px,3vw,36px)/1.25 ui-monospace,Menlo,monospace;letter-spacing:-1.5px;margin:8px 0 10px;text-shadow:0 2px 12px #060908}.context p{color:#c3cdbf;font-size:12px;margin:0}
+.hud{position:absolute;z-index:2;top:120px;right:32px;display:grid;grid-template-columns:repeat(3,auto);gap:14px 26px;text-align:right}.stat .k{display:block;color:#aeb9ab;font-size:9px;letter-spacing:1.4px;text-transform:uppercase;margin-bottom:3px}.stat .v{font-size:17px}.stat .sub{display:block;font-size:9px;color:var(--dim);margin-top:2px}.stat .v.phase{color:var(--amber);font-size:13px;text-transform:uppercase;letter-spacing:1px}
+#chart{position:absolute;z-index:3;right:32px;top:262px;width:300px;height:118px;border:1px solid var(--line);border-radius:9px;background:#0b1410cc;backdrop-filter:blur(8px)}#chart canvas{display:block;width:100%;height:100%}
+.bottom{position:absolute;z-index:4;bottom:max(20px,env(safe-area-inset-bottom));left:32px;right:32px;display:grid;gap:12px;pointer-events:none}.bottom>*{pointer-events:auto}.caption{display:flex;justify-content:space-between;gap:12px;color:#cfd8ca;font-size:10px}.caption p{margin:0}.caption .index{color:var(--amber);margin-right:8px}.caption .detail{color:var(--dim);font-size:9px}
+.deck{border:1px solid #a9bda72e;border-radius:11px;background:linear-gradient(120deg,#101b16f5,#0a1110f5);box-shadow:0 14px 48px #0007,0 1px 0 #ffffff08 inset;padding:13px 16px;display:flex;align-items:center;justify-content:space-between;gap:18px;backdrop-filter:blur(14px);flex-wrap:wrap}.group{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.group-label{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:1.3px;margin-right:6px}.deck button,.deck select{font-size:11px;white-space:nowrap}.divider{height:28px;width:1px;background:var(--line)}.glyphs{display:flex;gap:4px}.glyphs button{min-width:38px;padding:6px 8px;font-size:15px;line-height:1}.footer{display:flex;justify-content:space-between;gap:20px;color:var(--dim);font-size:9px}.footer p{margin:0}.key{border:1px solid #ffffff35;border-radius:3px;padding:1px 4px;color:#d0d4c5;font-size:9px}
+#toast{position:absolute;z-index:6;left:50%;bottom:190px;transform:translateX(-50%);padding:10px 18px;border:1px solid #8fc9a350;border-radius:7px;background:#0c1914f5;color:#dcead1;box-shadow:0 8px 35px #0006;pointer-events:none;font-size:12px;max-width:90vw;opacity:0;transition:opacity .2s}#toast.show{opacity:1}
+#loading{position:absolute;inset:0;z-index:3;display:grid;place-content:center;text-align:center;pointer-events:none;background:#060908;transition:opacity .5s}#loading.loaded{opacity:0}#loading strong{color:var(--amber);font-size:22px}#loading p{color:var(--dim);font-size:11px}#loading .g{letter-spacing:8px;font-size:26px;margin-bottom:18px;color:var(--moss)}
+dialog{color:var(--fg);width:min(560px,calc(100% - 32px));border:1px solid #8fc9a344;border-radius:14px;padding:28px;background:#0b1210;box-shadow:0 20px 100px #000b}dialog::backdrop{background:#020807bb;backdrop-filter:blur(5px)}dialog h2{font-size:21px;letter-spacing:-.8px;margin-top:0}dialog p,dialog li{color:#b7c0ae;font-size:12px}dialog .legend{display:grid;grid-template-columns:110px 1fr;gap:10px;margin:22px 0;font-size:12px}.legend b{color:var(--amber);font-weight:400}.legend span{color:var(--dim)}dialog .actions{text-align:right;margin-top:22px}.shortcut{display:flex;justify-content:space-between;border-top:1px solid var(--line);padding:8px 0;color:#b7c0ae;font-size:11px}
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:1100px){#chart{display:none}.hud{grid-template-columns:repeat(3,auto);gap:10px 16px}.context h2{font-size:26px}.footer .principle{display:none}}
+@media(max-width:760px){.header{left:16px;right:16px;top:18px}.brand h1{font-size:19px}.brand .eyebrow{margin-left:0;font-size:8px}.session{display:none}.context{left:16px;top:96px;max-width:none;right:16px}.context h2{font-size:22px}.context p{display:none}.hud{left:16px;right:16px;top:160px;text-align:left;grid-template-columns:repeat(3,1fr);gap:8px}.stat .v{font-size:15px}.bottom{left:10px;right:10px;bottom:10px;gap:8px}.deck{padding:10px;gap:8px;justify-content:center}.divider,.group-label{display:none}.caption{justify-content:center;font-size:9px}.caption .detail{display:none}.footer{justify-content:center;font-size:8px}#stage{top:200px;bottom:150px}#toast{bottom:200px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main id="app">
+<section id="stage" aria-label="Clockwork Garden simulation">
+<canvas id="c" tabindex="0" role="img" aria-label="A grid world of fungal colonies drawn as points, with hyphae as faint lines to trees drawn as rings. Signals ripple along the network. A boundary column on the right shows the message fragments. Use the controls below to pause, change ecology, or send a signal."></canvas>
+</section>
+<header class="header"><div class="brand"><h1><span class="mark" aria-hidden="true">✳</span>Clockwork Garden</h1><p class="eyebrow">A living substrate</p></div><nav class="header-right" aria-label="About"><span class="session" id="session">Tending</span><button id="help" class="quiet" aria-label="How to read this">?</button><a id="repo" href="../" style="display:none"></a></nav></header>
+<div class="context"><div class="eyebrow">Biome <span style="color:var(--amber)">/ <span id="biome">Deep Forest</span></span></div><h2 id="headline">Colonies forage.<br>Trees connect them.<br>A language arrives.</h2><p id="sub">Five species share one hyphal network. At the boundary, a message is sent in fragments only cooperation can read.</p></div>
+<section class="hud" aria-label="Garden status" aria-live="polite" aria-atomic="false">
+<div class="stat"><span class="k">Generation</span><span class="v" id="gen">0</span><span class="sub" id="steps">step 0 / 60</span></div>
+<div class="stat"><span class="k">Colonies</span><span class="v" id="pop">0</span><span class="sub" id="species">5 species</span></div>
+<div class="stat"><span class="k">Arrival</span><span class="v phase" id="phase">dormant</span><span class="sub" id="frags">0 / 5 fragments</span></div>
+<div class="stat"><span class="k">Emedigir adoption</span><span class="v" id="adopt">0%</span><span class="sub">colonies using the vocabulary</span></div>
+<div class="stat"><span class="k">Cooperation</span><span class="v" id="coop">0%</span><span class="sub">trees with multi-species support</span></div>
+<div class="stat"><span class="k">Hub trees</span><span class="v" id="hubs">0</span><span class="sub">linked to 3+ colonies</span></div>
+</section>
+<div id="chart" aria-hidden="true"><canvas id="chartc"></canvas></div>
+<div class="bottom">
+<div class="caption"><p><span class="index" aria-hidden="true">↳</span><span id="caption">Click anywhere to drop a nutrient pulse. Send a signal to speak to the colonies.</span></p><span class="detail" id="detail">Seeded, deterministic. Reseed for another world.</span></div>
+<section class="deck" aria-label="Controls">
+<div class="group"><button id="pause" aria-pressed="false" title="Pause or resume (Space)">Ⅱ Pause</button><button id="speed" aria-pressed="false" title="Fast time (F)">1× Time</button><button id="reseed" title="New world (R)">↻ Reseed</button></div>
+<div class="divider"></div>
+<div class="group"><span class="group-label">Ecology</span><button id="modeB" aria-pressed="true" title="Thread B: five species on one network">Wood-wide web</button><button id="modeA" aria-pressed="false" title="Thread A: one species, no network">Monoculture</button></div>
+<div class="divider"></div>
+<div class="group"><span class="group-label">Send a signal</span><div class="glyphs" id="glyphs" role="group" aria-label="Emedigir symbols 0 to 7"></div><button id="weaver" title="Send the first word, WEAVER (W)">Send WEAVER</button></div>
+</section>
+<footer class="footer"><p class="principle"><span style="color:#bed0b0">Sense first · speak rarely · listen always.</span></p><p><span class="key">Space</span> pause <span aria-hidden="true">·</span> <span class="key">F</span> fast <span aria-hidden="true">·</span> <span class="key">R</span> reseed <span aria-hidden="true">·</span> <span class="key">W</span> WEAVER <span aria-hidden="true">·</span> <span id="perf">rendering</span></p><p>An in-browser sketch of the mechanics. The experiment itself is in the repository.</p></footer>
+</div>
+<div id="loading" role="status"><div class="g" aria-hidden="true">·∴✳∴·</div><strong>Growing a small world.</strong><p>Colonies, hyphae, trees, and a boundary that listens.</p></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<p class="sr" id="description">An animated simulation. Colonies are coloured points that grow hyphae toward nutrients and trees. Trees are rings; a ring linked to colonies of several species glows warmer. Signals ripple along hyphae. A column of eight symbols on the right edge is the boundary where message fragments appear. Status values above report generation, colonies, arrival phase, adoption and cooperation.</p>
+<dialog id="help-dialog" aria-labelledby="help-title"><h2 id="help-title">How to read the garden</h2><p>This page runs a small version of the Clockwork Garden's mechanics in your browser: a grid world with a nutrient field, colonies that forage and reproduce, hyphae that reach for nutrients and trees, trees that reward multi-species support, and a boundary that sends a message in species-keyed fragments.</p>
+<div class="legend"><b>● points</b><span>Colonies, coloured by species. Brighter when they hold energy.</span><b>— lines</b><span>Hyphae: the network. Signals travel along them.</span><b>◎ rings</b><span>Trees. Warm rings have support from several species, which is what cooperation means here.</span><b>▮ column</b><span>The boundary. Fragments of the first word, WEAVER, appear here once colonies arrive and stay.</span><b>◌ ripples</b><span>A signal propagating. Yours, when you send one; the colonies', when they answer.</span></div>
+<p>In the <b>wood-wide web</b> ecology five species share the network and no single species can read the whole message, so adoption rises only through cooperation, slowly, then all at once. In the <b>monoculture</b> the message stalls at one fragment. The real experiment, with the same two ecologies and a fixed seed, is in <code>experiments/dual-thread/</code>.</p>
+<div class="shortcut"><span>Pause / resume</span><kbd>Space</kbd></div><div class="shortcut"><span>Fast time</span><kbd>F</kbd></div><div class="shortcut"><span>New world</span><kbd>R</kbd></div><div class="shortcut"><span>Send WEAVER</span><kbd>W</kbd></div><div class="shortcut"><span>Send one symbol</span><kbd>0 to 7</kbd></div>
+<p>Nothing here is a claim about living fungi, and nothing is recorded. The garden is tended, not driven.</p>
+<form method="dialog" class="actions"><button class="primary">Back to the garden</button></form></dialog>
+<div id="error" role="alert" hidden></div><noscript><p>This simulation needs JavaScript.</p></noscript>
+</main>
+<script>
+'use strict';
+// ------------------------------------------------------------------ engine
+function createGarden(opts){
+  const S = opts.seed>>>0;
+  let st = S||1; const rnd = ()=>{ st += 0x6D2B79F5; let t = st; t = Math.imul(t ^ t>>>15, t|1); t ^= t + Math.imul(t ^ t>>>7, t|61); return ((t ^ t>>>14)>>>0)/4294967296; };
+  const W = opts.w, H = opts.h, SPECIES = opts.species, NET = opts.network;
+  const TEMPL = 8, WEAVER = [4,2,6,3, 1,7,5,2, 3,6,4,7, 2,5,1,3, 7,3,6,2];
+  const nut = new Float32Array(W*H), nut2 = new Float32Array(W*H), occ = new Uint8Array(W*H);
+  const sig = Array.from({length:TEMPL}, ()=>new Float32Array(W*H));
+  const trees = [], cols = []; let nextId = 1;
+  let gen = 0, step = 0, STEPS = 60, contactGen = -1;
+  const arrival = { phase:0, sustain:0, fragments:[0,0,0,0,0], decodedBy:[0,0,0,0,0], responded:false };
+  const hist = []; const ripples = [];
+  const idx = (x,y)=>y*W+x;
+  function seedWorld(){
+    trees.length = 0; cols.length = 0;
+    const nTrees = Math.round(W*H/320);
+    for(let i=0;i<nTrees;i++) trees.push({x:2+Math.floor(rnd()*(W-6)), y:2+Math.floor(rnd()*(H-4)), health:.5, links:new Map(), size:1+rnd()});
+    for(let i=0;i<opts.colonies;i++) spawn(Math.floor(rnd()*(W-8)), Math.floor(rnd()*H), Math.floor(rnd()*SPECIES), null);
+    nut.fill(0); for(const t of trees){ nut[idx(t.x,t.y)] = 6; }
+    occ.fill(0); for(const c of cols) occ[idx(c.x,c.y)]++;
+    for(let i=0;i<3;i++){ nut[idx(Math.floor(rnd()*W), Math.floor(rnd()*H))] += 2; }
+  }
+  function spawn(x,y,sp,parent){
+    const g = parent ? parent.geno.map(v=>Math.min(1,Math.max(0, v + (rnd()-.5)*.2))) : Array.from({length:TEMPL}, ()=>rnd());
+    cols.push({id:nextId++, x, y, sp, energy:1+rnd(), geno:g, hy:[], tree:null, vocab:parent?parent.vocab.slice():[0,0,0,0,0], age:0, adopt:parent?parent.adopt:false, decoded:parent?parent.decoded:0});
+  }
+  function tick(){
+    // nutrients: diffusion + decay, trees are the economy
+    for(let y=0;y<H;y++)for(let x=0;x<W;x++){ const i=idx(x,y); let s=nut[i]*4; s+= x>0?nut[i-1]:nut[i]; s+= x<W-1?nut[i+1]:nut[i]; s+= y>0?nut[i-W]:nut[i]; s+= y<H-1?nut[i+W]:nut[i]; nut2[i]=s/8*.985; }
+    nut.set(nut2); for(const t of trees){ nut[idx(t.x,t.y)] = Math.min(8, nut[idx(t.x,t.y)] + 1.2 + t.health*2); }
+    // continuous boundary reward: a faint gradient the colonies climb toward the listening edge
+    for(let y=0;y<H;y++){ nut[idx(W-1,y)] = Math.min(6, nut[idx(W-1,y)] + .45); nut[idx(W-2,y)] = Math.min(5, nut[idx(W-2,y)] + .2); }
+    for(const f of sig) for(let i=0;i<f.length;i++) f[i]*=.9;
+    for(const t of trees){ t.links.clear(); }
+    // colonies
+    for(let k=cols.length-1;k>=0;k--){
+      const c = cols[k]; c.age++;
+      const i = idx(c.x,c.y); const take = Math.min(nut[i], .22); nut[i]-=take; c.energy += take*(NET?1:.6) - .085;
+      // grow one hypha toward the best neighbouring nutrient (and toward trees)
+      let bx=c.x, by=c.y, best=nut[i];
+      for(let d=0; d<4; d++){ const nx=c.x+[1,-1,0,0][d], ny=c.y+[0,0,1,-1][d]; if(nx<0||ny<0||nx>=W||ny>=H) continue; const v = nut[idx(nx,ny)] + (rnd()*.3); if(v>best){best=v;bx=nx;by=ny;} }
+      if(c.hy.length<6 && (bx!==c.x||by!==c.y) && rnd()<.5){ c.hy.push([bx,by]); c.dir=[bx-c.x, by-c.y]; }
+      if(c.hy.length>6) c.hy.shift();
+      // tree mutualism: nearest tree within reach
+      let tr=null, td=9; for(const t of trees){ const d=Math.abs(t.x-c.x)+Math.abs(t.y-c.y); if(d<td){td=d; tr=t;} }
+      if(tr && td<=5){ c.tree=tr; tr.links.set(c.id, c.sp); const bonus = NET ? .06*(1+tr.health) : .03; c.energy += bonus; } else c.tree=null;
+      // signalling: emit preferred template; neighbours on the same tree hear it
+      const tpl = c.geno.indexOf(Math.max(...c.geno)); sig[tpl][i] = Math.min(1, sig[tpl][i] + .6);
+      // reproduce / die
+      if(c.energy>4.5 && cols.length<opts.maxColonies){ const d=c.dir||[1,0]; const nx=Math.min(W-1,Math.max(0,c.x+d[0]*(1+Math.floor(rnd()*3))+Math.round((rnd()-.5)*2))), ny=Math.min(H-1,Math.max(0,c.y+d[1]*(1+Math.floor(rnd()*3))+Math.round((rnd()-.5)*3))); if(!occ[idx(nx,ny)]){ c.energy-=2.4; spawn(nx,ny,c.sp,c); occ[idx(nx,ny)]++; } else c.energy-=.4; }
+      if(c.energy<=0 || c.age>360+rnd()*240){ occ[i]=Math.max(0,occ[i]-1); cols.splice(k,1); }
+    }
+    // tree health: multi-species support rewards
+    for(const t of trees){ const sp = new Set(t.links.values()).size; const target = NET ? Math.min(1, .25 + .2*sp) : Math.min(1, .25 + .05*t.links.size); t.health += (target - t.health)*.05; }
+    // boundary and arrival
+    const nearBoundary = cols.filter(c=>c.x>=W-8).length;
+    if(step===STEPS-1){ endGeneration(nearBoundary); }
+    step++; if(step>=STEPS){ step=0; }
+  }
+  function endGeneration(nearBoundary){
+    gen++;
+    const a = arrival;
+    if(a.phase===0 && nearBoundary>4){ a.phase=1; a.sustain=0; }
+    else if(a.phase===1){ a.sustain = nearBoundary>4 ? a.sustain+1 : 0; if(a.sustain>=3){ a.phase=2; } }
+    else if(a.phase===2){
+      // each species decodes its own fragment; fragments spread through the network via shared trees
+      const perSp = new Array(SPECIES).fill(0);
+      // a species decodes its fragment when one of its colonies listens at the boundary, or (on the network) when a
+      // colony of that species shares a tree with a boundary colony and the fragment travels along the hyphae
+      const atBoundary = new Set(cols.filter(c=>c.x>=W-8).map(c=>c.sp%5)); const present = new Set(cols.map(c=>c.sp%5));
+      for(let f=0; f<5; f++){ if(a.fragments[f]) continue; if(SPECIES===1 && f!==0) continue; if(atBoundary.has(f) && rnd()<.6) a.fragments[f]=1; else if(NET && atBoundary.size>0 && present.has(f) && rnd()<.15) a.fragments[f]=1; }
+      // decoded fragments travel to colonies that share a tree with a decoder
+      for(const c of cols){ if(c.tree){ const peers=[...c.tree.links.values()]; const diverse = new Set(peers).size; if(NET && diverse>=2 && rnd()<.45) c.decoded = Math.min(5, c.decoded+1); if(!NET && rnd()<.02) c.decoded = Math.min(1, c.decoded+1); } }
+      const got = a.fragments.reduce((s,v)=>s+v,0);
+      if(got>=5) a.phase=3; else if(got>=1 && SPECIES===1) { /* monoculture stalls: no other species keys */ }
+    }
+    else if(a.phase===3){ const ready = cols.filter(c=>c.decoded>=5).length; if(ready>=5){ a.phase=4; a.responded=true; contactGen=gen; ripple(W-1, H/2, 'gold'); } }
+    else if(a.phase===4){ for(const c of cols){ if(c.decoded>=4 && !c.adopt && rnd()<.3) c.adopt=true; if(c.adopt && c.tree && rnd()<.35){ for(const o of cols){ if(o.tree===c.tree && !o.adopt && o.decoded>=3 && rnd()<.5) o.adopt=true; } } } }
+    // drift of vocabulary toward WEAVER templates for adopters
+    for(const c of cols){ if(c.adopt){ for(let t=0;t<TEMPL;t++){ c.geno[t] = WEAVER.includes(t) ? Math.min(1, c.geno[t]+.05) : c.geno[t]*.97; } } }
+    hist.push({gen, adopt:adoption(), coop:cooperation()}); if(hist.length>400) hist.shift();
+  }
+  function adoption(){ return cols.length? cols.filter(c=>c.adopt).length/cols.length : 0; }
+  function cooperation(){ if(!trees.length) return 0; let s=0; for(const t of trees){ const n = new Set(t.links.values()).size; s += (n>=2 ? t.health : 0); } return s/trees.length; }
+  function hubs(){ return trees.filter(t=>t.links.size>=3).length; }
+  function ripple(x,y,kind){ ripples.push({x,y,r:0,kind}); }
+  function sendSignal(symbols){ // place at the boundary, propagate along the network
+    for(const s of symbols){ for(let y=0;y<H;y++) sig[s%TEMPL][idx(W-1,y)] = 1; }
+    ripple(W-1, H/2, 'amber');
+    let heard = 0; for(const c of cols){ if(c.x>=W-12){ heard++; if(arrival.phase>=2 && rnd()<.5) c.decoded=Math.min(5,c.decoded+1); } }
+    return heard;
+  }
+  function dropNutrient(x,y){ const i=idx(Math.min(W-1,Math.max(0,x)), Math.min(H-1,Math.max(0,y))); nut[i]=Math.min(10, nut[i]+6); ripple(x,y,'moss'); }
+  seedWorld();
+  return { tick, get gen(){return gen}, get step(){return step}, STEPS, cols, trees, nut, sig, W, H, SPECIES, NET, arrival, hist, ripples, adoption, cooperation, hubs, sendSignal, dropNutrient, WEAVER, get contactGen(){return contactGen} };
+}
+// ------------------------------------------------------------------ render
+const SPCOL = ['#5fae7a','#78a9b8','#d9b35a','#c98bd4','#d97a5a','#9ad36b','#67c3c9'];
+function createRenderer(canvas, chartCanvas){
+  const ctx = canvas.getContext('2d'); const cctx = chartCanvas.getContext('2d');
+  let dpr = Math.min(2, devicePixelRatio||1), vw=0, vh=0;
+  function resize(){ dpr = Math.min(2, devicePixelRatio||1); vw = canvas.clientWidth; vh = canvas.clientHeight; canvas.width = vw*dpr; canvas.height = vh*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); chartCanvas.width = chartCanvas.clientWidth*dpr; chartCanvas.height = chartCanvas.clientHeight*dpr; cctx.setTransform(dpr,0,0,dpr,0,0); }
+  function draw(g, t){
+    const padR = vw>1100 ? 340 : 0, padT = vw>760 ? 90 : 0, padB = 150; const cell = Math.min((vw-padR-40)/(g.W+2), (vh-padT-padB)/(g.H+2)); const ox = Math.max(24, (vw-padR - g.W*cell)/2), oy = padT + (vh-padT-padB - g.H*cell)/2;
+    ctx.fillStyle = '#060908'; ctx.fillRect(0,0,vw,vh);
+    // nutrient haze
+    for(let y=0;y<g.H;y++)for(let x=0;x<g.W;x++){ const v=g.nut[y*g.W+x]; if(v>.15){ ctx.fillStyle=`rgba(95,174,122,${Math.min(.35,v*.05)})`; ctx.fillRect(ox+x*cell, oy+y*cell, cell, cell); } }
+    // signal fields as faint tinted cells (max over templates)
+    for(let y=0;y<g.H;y++)for(let x=0;x<g.W;x++){ let m=0,mt=0; for(let k=0;k<8;k++){ const v=g.sig[k][y*g.W+x]; if(v>m){m=v;mt=k;} } if(m>.12){ ctx.fillStyle = g.WEAVER.includes(mt)?`rgba(233,178,92,${m*.35})`:`rgba(120,169,184,${m*.25})`; ctx.fillRect(ox+x*cell, oy+y*cell, cell, cell); } }
+    // hyphae
+    ctx.lineWidth = Math.max(.6, cell*.18); ctx.strokeStyle = 'rgba(190,208,176,.22)';
+    ctx.beginPath(); for(const c of g.cols){ let px=ox+(c.x+.5)*cell, py=oy+(c.y+.5)*cell; for(const [hx,hy] of c.hy){ ctx.moveTo(px,py); const qx=ox+(hx+.5)*cell, qy=oy+(hy+.5)*cell; ctx.lineTo(qx,qy); px=qx; py=qy; } if(c.tree){ ctx.moveTo(ox+(c.x+.5)*cell, oy+(c.y+.5)*cell); ctx.lineTo(ox+(c.tree.x+.5)*cell, oy+(c.tree.y+.5)*cell); } } ctx.stroke();
+    // trees
+    for(const tr of g.trees){ const n = new Set(tr.links.values()).size; const r = cell*(.9+tr.size*.5); const cx=ox+(tr.x+.5)*cell, cy=oy+(tr.y+.5)*cell; ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.lineWidth = 1.2; ctx.strokeStyle = n>=2 ? `rgba(243,207,122,${.45+.5*tr.health})` : 'rgba(147,163,145,.55)'; ctx.stroke(); if(n>=2){ ctx.beginPath(); ctx.arc(cx,cy,r*.45,0,Math.PI*2); ctx.fillStyle=`rgba(243,207,122,${.15+.35*tr.health})`; ctx.fill(); } }
+    // colonies
+    for(const c of g.cols){ const cx=ox+(c.x+.5)*cell, cy=oy+(c.y+.5)*cell; const e=Math.min(1,c.energy/3); ctx.beginPath(); ctx.arc(cx,cy,Math.max(1.2,cell*(.28+.18*e)),0,Math.PI*2); ctx.fillStyle = c.adopt ? '#f3cf7a' : SPCOL[c.sp%SPCOL.length]; ctx.globalAlpha = .45+.55*e; ctx.fill(); ctx.globalAlpha=1; }
+    // boundary column with fragments
+    const bx = ox+(g.W-.5)*cell; ctx.fillStyle='rgba(233,178,92,.07)'; ctx.fillRect(ox+(g.W-8)*cell, oy, 8*cell, g.H*cell);
+    ctx.strokeStyle='rgba(233,178,92,.5)'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(ox+g.W*cell, oy); ctx.lineTo(ox+g.W*cell, oy+g.H*cell); ctx.stroke();
+    const ph = g.arrival.phase; ctx.font = `${Math.max(9,cell*1.6)}px ui-monospace,monospace`; ctx.textAlign='center'; ctx.textBaseline='middle';
+    for(let f=0;f<5;f++){ const y = oy + (g.H*(f+1)/6)*cell; const on = g.arrival.fragments[f]; ctx.fillStyle = on ? '#f3cf7a' : (ph>=2 ? 'rgba(233,178,92,.35)' : 'rgba(147,163,145,.25)'); const word = g.WEAVER.slice(f*4,f*4+4).map(s=>'·∴✳∷◦●◌▲'[s]).join(''); ctx.fillText(on? word : (ph>=2?'∷∷∷∷':'····'), bx + cell*1.6, y); }
+    // ripples
+    for(let i=g.ripples.length-1;i>=0;i--){ const rp=g.ripples[i]; rp.r += cell*.9; const a = Math.max(0, 1 - rp.r/(cell*28)); if(a<=0){ g.ripples.splice(i,1); continue; } ctx.beginPath(); ctx.arc(ox+(rp.x+.5)*cell, oy+(rp.y+.5)*cell, rp.r, 0, Math.PI*2); ctx.strokeStyle = rp.kind==='gold' ? `rgba(243,207,122,${a*.9})` : rp.kind==='amber' ? `rgba(233,178,92,${a*.8})` : `rgba(95,174,122,${a*.7})`; ctx.lineWidth = 1.5; ctx.stroke(); }
+  }
+  function chart(hist){ const w=chartCanvas.clientWidth, h=chartCanvas.clientHeight; cctx.clearRect(0,0,w,h); cctx.font='9px ui-monospace,monospace'; cctx.fillStyle='#93a391'; cctx.fillText('adoption', 10, 12); cctx.fillStyle='#78a9b8'; cctx.fillText('cooperation', 70, 12); cctx.strokeStyle='#ffffff18'; cctx.beginPath(); cctx.moveTo(8,h-10); cctx.lineTo(w-8,h-10); cctx.stroke(); if(hist.length<2) return; const n=hist.length; const X=i=>8+(w-16)*i/(Math.max(n-1,1)); const Y=v=>h-10-(h-26)*v; for(const [key,col] of [['adopt','#f3cf7a'],['coop','#78a9b8']]){ cctx.beginPath(); hist.forEach((p,i)=>{ i?cctx.lineTo(X(i),Y(p[key])):cctx.moveTo(X(i),Y(p[key])); }); cctx.strokeStyle=col; cctx.lineWidth=1.5; cctx.stroke(); } const last=hist[n-1]; cctx.fillStyle='#f3cf7a'; cctx.fillText(Math.round(last.adopt*100)+'%', w-34, Y(last.adopt)-4); }
+  return { resize, draw, chart, cellAt(x,y,g){ const padR = vw>1100 ? 340 : 0, padT = vw>760 ? 90 : 0, padB = 150; const cell = Math.min((vw-padR-40)/(g.W+2), (vh-padT-padB)/(g.H+2)); const ox = Math.max(24, (vw-padR - g.W*cell)/2), oy = padT + (vh-padT-padB - g.H*cell)/2; return [Math.floor((x-ox)/cell), Math.floor((y-oy)/cell)]; } };
+}
+// ------------------------------------------------------------------ app
+(function(){
+  const $ = id=>document.getElementById(id);
+  const canvas=$('c'), chartc=$('chartc'); const R = createRenderer(canvas, chartc);
+  const motion = matchMedia('(prefers-reduced-motion: reduce)');
+  const seedBuf = new Uint32Array(1); crypto.getRandomValues(seedBuf);
+  const BIOMES = { B:{name:'Deep Forest', species:5, network:true, headline:'Colonies forage.<br>Trees connect them.<br>A language arrives.', sub:'Five species share one hyphal network. At the boundary, a message is sent in fragments only cooperation can read.'}, A:{name:'Humongous Fungus', species:1, network:false, headline:'One species.<br>No network.<br>The message stalls.', sub:'A monoculture reaches the boundary too, but one key opens one fragment. Nothing spreads.'} };
+  let mode='B', seed=seedBuf[0], g, paused=false, fast=false, last=0, acc=0, frames=0, fpsT=performance.now();
+  function build(){ const b=BIOMES[mode]; g = createGarden({seed, w:96, h:60, species:b.species, network:b.network, colonies:110, maxColonies:360}); $('biome').textContent=b.name; $('headline').innerHTML=b.headline; $('sub').textContent=b.sub; $('species').textContent = b.species+(b.species>1?' species':' species (control)'); }
+  function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toast.h); toast.h=setTimeout(()=>t.classList.remove('show'), 2600); }
+  function hud(){ $('gen').textContent=g.gen; $('steps').textContent=`step ${g.step} / ${g.STEPS}`; $('pop').textContent=g.cols.length; const ph=['dormant','listening','transmitting','awaiting','complete'][g.arrival.phase]; $('phase').textContent=ph; $('frags').textContent=`${g.arrival.fragments.reduce((s,v)=>s+v,0)} / 5 fragments`; $('adopt').textContent=Math.round(g.adoption()*100)+'%'; $('coop').textContent=Math.round(g.cooperation()*100)+'%'; $('hubs').textContent=g.hubs(); $('session').textContent = g.arrival.phase===4 ? 'Contact established' : (g.arrival.phase>=2 ? 'Transmitting' : 'Tending'); }
+  function frame(now){ requestAnimationFrame(frame); const dt=Math.min(100, now-last); last=now; if(!paused){ acc += dt*(fast?4:1); const per = motion.matches ? 90 : 45; while(acc>per){ g.tick(); acc-=per; } } R.draw(g, now); if(frames%6===0){ hud(); R.chart(g.hist); } frames++; if(now-fpsT>2000){ $('perf').textContent = `${Math.round(frames*1000/(now-fpsT))} fps`; frames=0; fpsT=now; } }
+  // controls
+  $('pause').onclick=()=>{ paused=!paused; $('pause').setAttribute('aria-pressed',paused); $('pause').textContent = paused?'▶ Resume':'Ⅱ Pause'; };
+  $('speed').onclick=()=>{ fast=!fast; $('speed').setAttribute('aria-pressed',fast); $('speed').textContent = fast?'4× Time':'1× Time'; };
+  $('reseed').onclick=()=>{ crypto.getRandomValues(seedBuf); seed=seedBuf[0]; build(); toast('A new world, seed '+seed.toString(16)); };
+  function setMode(m){ mode=m; $('modeA').setAttribute('aria-pressed', m==='A'); $('modeB').setAttribute('aria-pressed', m==='B'); build(); toast(m==='B' ? 'Wood-wide web: five species, one network' : 'Monoculture: one species, no network'); }
+  $('modeA').onclick=()=>setMode('A'); $('modeB').onclick=()=>setMode('B');
+  const glyphs = '·∴✳∷◦●◌▲'; const gl=$('glyphs'); for(let s=0;s<8;s++){ const b=document.createElement('button'); b.textContent=glyphs[s]; b.title='Send symbol '+s; b.setAttribute('aria-label','Send symbol '+s); b.onclick=()=>{ const n=g.sendSignal([s]); toast(`Symbol ${s} at the boundary · ${n} colonies in range`); }; gl.appendChild(b); }
+  $('weaver').onclick=()=>{ const n=g.sendSignal(g.WEAVER); toast(`WEAVER sent · ${n} colonies heard it`); };
+  canvas.addEventListener('click', e=>{ const r=canvas.getBoundingClientRect(); const [x,y]=R.cellAt(e.clientX-r.left, e.clientY-r.top, g); if(x>=0&&y>=0&&x<g.W&&y<g.H){ g.dropNutrient(x,y); } });
+  addEventListener('keydown', e=>{ if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT') return; if(e.key===' '){ e.preventDefault(); $('pause').click(); } else if(e.key==='f'||e.key==='F') $('speed').click(); else if(e.key==='r'||e.key==='R') $('reseed').click(); else if(e.key==='w'||e.key==='W') $('weaver').click(); else if(/^[0-7]$/.test(e.key)) gl.children[+e.key].click(); else if(e.key==='?') $('help').click(); });
+  $('help').onclick=()=>$('help-dialog').showModal();
+  addEventListener('resize', R.resize);
+  try{ R.resize(); build(); requestAnimationFrame(frame); setTimeout(()=>$('loading').classList.add('loaded'), 600); }
+  catch(err){ const e=$('error'); e.hidden=false; e.textContent='The garden could not start: '+err.message; }
+})();
+</script>
+</body>
+</html>
