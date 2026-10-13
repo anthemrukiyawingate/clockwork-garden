@@ -2,10 +2,10 @@
 
 **An agent-based simulation of fungal colonies that evolve a shared signalling language through mycorrhizal cooperation, run as a small universe of containerised biomes that a steward can speak to.**
 
-Version 6.7.0 · MIT licence · Python 3.11 · Docker Compose
+Version 6.7.1 · MIT licence · Python 3.11 · Docker Compose
 
 - **Live demo (GitHub Pages):** `docs/index.html`, an in-browser sketch of the garden's mechanics.
-- **Reproducible experiment:** `experiments/dual-thread/`, the monoculture-versus-network comparison with a fixed seed.
+- **The April experiment:** the monoculture-versus-network comparison (section 11) is reported from the April run; its folder is withheld from this release until its control condition reproduces.
 - **Running garden:** `docker compose up -d --build`, four biomes, an orchestrator and a message bus on one machine.
 
 ---
@@ -46,14 +46,14 @@ The garden is a model, and it is also a design: the emulated garden stands in fo
 
 The underlying question comes from mycorrhizal ecology. Trees linked by fungal networks exchange carbon and defence signals; the network is dominated by hub trees; cooperation is kept stable by reciprocal reward. The simulation asks a narrower, testable version of this: **does multi-species diversity, mediated by a shared network, drive the emergence of cooperative communication where a monoculture does not?**
 
-The experiment in `experiments/dual-thread/` runs identical code in two ecologies:
+The April 2026 experiment ran the same simulation code in two ecologies:
 
 | Thread | Ecology | What happens (seed 42, 1000 generations) |
 |---|---|---|
 | A, monoculture | one species, no interaction loop | the boundary message is never decoded beyond one fragment; cooperation stays below 20%; Emedigir adoption 0% |
 | B, wood-wide web | five species, mycorrhizal interaction loop | first contact around generation 7 to 9; adoption rises along an S-curve to about 95%; cooperation about 72% |
 
-Adoption spreads the way conventions spread in signalling games: slowly, then all at once, then saturating. The result is reproducible from the fixed seed with `reproduce.sh`.
+Adoption spreads the way conventions spread in signalling games: slowly, then all at once, then saturating. These figures are from the April run; see section 11 for why the comparison folder is not in this release.
 
 Three design choices make the network, not the ground, the economy: ground nutrients are trace amounts; trees are the main energy source; and a tree is healthier the more species support it, so multi-species mutualism is rewarded directly.
 
@@ -80,7 +80,6 @@ curl -s localhost:8004/state
 
 Stop everything and keep the state volumes: `docker compose down`. Stop and discard: `docker compose down -v`.
 
-To run only the dual-thread experiment: `cd experiments/dual-thread && docker compose up -d --build && ./reproduce.sh`.
 
 ## 4. Architecture
 
@@ -176,9 +175,10 @@ Per-biome environment (see `docker-compose.yml`):
 | Variable | Meaning | Default |
 |---|---|---|
 | `BIOME_ID`, `BIOME_NAME` | identity | required |
-| `COLONY_COUNT`, `SPECIES_COUNT` | initial population and species | 2800, 5 |
-| `SIGNAL_ATTENUATION` | per-hop attenuation of relayed signals | 0.15 |
+| `COLONY_COUNT`, `SPECIES_COUNT` | initial population and founder species | 2800, 5 |
 | `CG_SEED` | simulation seed | 42 |
+| `CG_CONFIG_JSON` | optional JSON object merged into the configuration at start | — |
+| `SIGNAL_ATTENUATION` | reserved for the relay service; the biome itself does not read it | 0.15 |
 | `CG_SAVE_INTERVAL` | checkpoint every N generations | 100 |
 | `CG_CHECKPOINT_DIR` | checkpoint directory | `/app/state` |
 | `CG_PERSISTENT` | resume from checkpoint on start | true |
@@ -216,7 +216,7 @@ Orchestrator (port 8010): `GET /health`, `GET /biomes`, `GET /status`, `POST /sp
 
 ## 11. The dual-thread experiment
 
-`experiments/dual-thread/` is the reproducible comparison (v6.4 code, kept as it ran). Thread A is the monoculture control on port 8003; Thread B is the five-species network on port 8004. `reproduce.sh` resets both, runs generations in batches, prints adoption, cooperation, phase and fragments, and checks three thresholds (B adoption above 80%, B cooperation above 50%, A fragments at most 1 of 5). `./reproduce.sh full 1000` runs the full experiment; on one CPU core it takes a few hours.
+The monoculture-versus-network comparison was run in April 2026 as two containers from one code tree, seed 42, 1000 generations; the figures in section 2 are from that run. Release 6.7.0 shipped the two trees as `experiments/dual-thread/` with a `reproduce.sh`. Checking that bundle for 6.7.1 showed that the two trees differ only in comments and whitespace, and that a monoculture built with `SPECIES_COUNT=1` decodes all five boundary fragments within ten generations, so the April control result (one fragment of five, adoption 0%) does not reproduce from this code as packaged. Rather than ship a comparison whose control cannot be re-run, the folder is withheld from this release. The network ecology is the running garden itself (section 4); the comparison returns in a later release with a control that reproduces.
 
 ## 12. Persistence and recovery
 
@@ -230,7 +230,6 @@ Dockerfile.biome  Dockerfile.orchestrator  start_biome.sh
 orchestrator.py  nats_bridge.py  trajectory_logger.py
 src/                      the simulation (section 5)
 services/                 mycorrhizal_relay.py, linguistic_divergence.py
-experiments/dual-thread/  the reproducible experiment (section 11)
 docs/                     index.html (Pages demo), ARCHITECTURE.md, API.md
 ```
 
@@ -244,7 +243,7 @@ docs/                     index.html (Pages demo), ARCHITECTURE.md, API.md
 ## 15. Limitations and honest register
 
 - The Emedigir encoding shipped is a structured placeholder with a fixed first word; the language's full grammar is not in this repository.
-- Results depend on the seed and on floating-point order; the thresholds in `reproduce.sh` are robust, the exact percentages are not guaranteed across platforms.
+- Results depend on the seed and on floating-point order; qualitative behaviour (contact, S-curve adoption, cooperation) is robust, the exact percentages are not guaranteed across platforms.
 - The orchestrator uses the Docker socket, which is a privileged capability; run it only on a machine you control.
 - The relay and divergence services are research instruments, not hardened daemons.
 - Nothing here claims anything about living fungi. The in-vivo garden this design points at has not been built.
@@ -253,7 +252,7 @@ docs/                     index.html (Pages demo), ARCHITECTURE.md, API.md
 
 If you use this software, cite it as:
 
-> Wingate, A. R. J. (2026). *Clockwork Garden: emergent communication in a simulated mycorrhizal network* (Version 6.7.0) [Computer software]. MIT licence.
+> Wingate, A. R. J. (2026). *Clockwork Garden: emergent communication in a simulated mycorrhizal network* (Version 6.7.1) [Computer software]. MIT licence.
 
 ## 17. Licence
 
